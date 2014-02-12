@@ -10,7 +10,7 @@
     <ProjectGuid>{1AF5D50C-B1FA-4604-A33D-705A0DC849CA}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>akaChuck.Encryption</RootNamespace>
-    <AssemblyName>Encryption</AssemblyName>
+    <AssemblyName>akaChuck.Encryption</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Windows</MyType>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -21,7 +21,7 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\Debug\</OutputPath>
-    <DocumentationFile>Encryption.xml</DocumentationFile>
+    <DocumentationFile>akaChuck.Encryption.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -30,7 +30,7 @@
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>Encryption.xml</DocumentationFile>
+    <DocumentationFile>akaChuck.Encryption.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
@@ -66,7 +66,7 @@
   <ItemGroup>
     <Compile Include="EncryptionEnvelope.vb" />
     <Compile Include="PRNG.vb" />
-    <Compile Include="AESEncryption.vb" />
+    <Compile Include="SymmetricEncryption.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

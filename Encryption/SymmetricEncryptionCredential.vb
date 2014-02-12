@@ -43,29 +43,46 @@
 
     End Sub
 
-
     ''' <summary>
-    ''' Gets an AES Encryptor with key derived from RFC2898.
+    ''' Gets an Encryptor.
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Function GetAESEncryptor() As Security.Cryptography.ICryptoTransform
+    Public Function GetEncryptor() As Security.Cryptography.ICryptoTransform
+        Dim returnValue As Security.Cryptography.ICryptoTransform
 
-        Dim aes As New Security.Cryptography.AesManaged
+        Select Case Me.OvertParameters.Algorithm
+            Case EncryptionAlgorithm.AES256
+                Dim aes As New Security.Cryptography.AesManaged
 
-        aes.KeySize = Me.OvertParameters.KeySize
-        aes.Key = Me.Key
-        aes.IV = Me.IV
-        Return aes.CreateEncryptor()
+                aes.KeySize = Me.OvertParameters.KeySize
+                aes.Key = Me.Key
+                aes.IV = Me.IV
+                returnValue = aes.CreateEncryptor
+
+            Case Else
+                Throw New NotImplementedException("Invalid Algorithm")
+        End Select
+        Return returnValue
 
     End Function
-    Public Function GetAESDecryptor() As Security.Cryptography.ICryptoTransform
+    Public Function GetDecryptor() As Security.Cryptography.ICryptoTransform
 
-        Dim aes As New Security.Cryptography.AesManaged
-        aes.KeySize = Me.OvertParameters.KeySize
-        aes.Key = Me.Key
-        aes.IV = Me.IV
-        Return aes.CreateDecryptor
+        Dim returnValue As Security.Cryptography.ICryptoTransform
+
+        Select Case Me.OvertParameters.Algorithm
+            Case EncryptionAlgorithm.AES256
+                Dim aes As New Security.Cryptography.AesManaged
+
+                aes.KeySize = Me.OvertParameters.KeySize
+                aes.Key = Me.Key
+                aes.IV = Me.IV
+                returnValue = aes.CreateDecryptor
+
+            Case Else
+                Throw New NotImplementedException("Invalid Algorithm")
+        End Select
+        Return returnValue
 
     End Function
 
