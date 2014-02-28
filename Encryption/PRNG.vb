@@ -1,4 +1,21 @@
-﻿Public Class PRNG
+﻿' Copyright (C) 2014 a.k.a. Chuck, Inc.
+'
+' Authored by Edwin Landy - edwin@akaChuck.com.
+'
+' This program is free software: you can redistribute it and/or modify
+' it under the terms of the GNU General Public License as published by
+' the Free Software Foundation, either version 3 of the License, or
+' (at your option) any later version.
+'
+' This program is distributed in the hope that it will be useful,
+' but WITHOUT ANY WARRANTY; without even the implied warranty of
+' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+' GNU General Public License for more details.
+'
+' You should have received a copy of the GNU General Public License
+' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Public Class PRNG
     Public Shared Function GetRandomBytes(minLength As Integer, maxlength As Integer) As Byte()
         ' ***   1.  Get how long the password will be
         Dim rand As New Random
@@ -37,28 +54,28 @@
     End Function
 
     Public Shared Function GetRandomPrintablePassword(ByVal length As Integer) As String
-        Dim buffer(length * 2 - 1) As Byte
+        Dim randomBytePool(length * 2 - 1) As Byte
         Dim text(length - 1) As Char
         Dim textCounter As Integer = 0
-        Dim bufferCounter As Integer = 0
+        Dim poolCounter As Integer = 0
 
-        While bufferCounter < buffer.Length And textCounter < text.Length
-            buffer = GetRandomBytes(buffer.Length, buffer.Length)
+        While poolCounter < randomBytePool.Length And textCounter < text.Length
+            randomBytePool = GetRandomBytes(randomBytePool.Length, randomBytePool.Length)
 
-            While bufferCounter < buffer.Length And textCounter < text.Length
-                ' We are using a 94 byte search space. We must use
-                ' a multiple of 94 to prevent unneeded bias.
+            While poolCounter < randomBytePool.Length And textCounter < text.Length
+                ' We are using a search space length of 94. We must use
+                ' a multiple of 94 to prevent unnecessary bias.
                 ' Discard a byte larger than 187.
-                If buffer(bufferCounter) < 188 Then
+                If randomBytePool(poolCounter) < 188 Then
 
                     ' We only want to return printable chars, which are
                     ' represented by bytes 33 to 126.  We don't include space.
-                    text(textCounter) = Chr((buffer(bufferCounter) Mod 94) + 33)
+                    text(textCounter) = Chr((randomBytePool(poolCounter) Mod 94) + 33)
                     textCounter += 1
 
                 End If
 
-                bufferCounter += 1
+                poolCounter += 1
             End While
 
         End While

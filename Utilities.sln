@@ -1,0 +1,67 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DC7936C1-3E9E-4009-AC0F-4EE1B7FBDBD6}"
+	ProjectSection(SolutionItems) = preProject
+		Encryption.vsmdi = Encryption.vsmdi
+		LICENSE.txt = LICENSE.txt
+		Local.testsettings = Local.testsettings
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Encryption", "Encryption\Encryption.vbproj", "{1AF5D50C-B1FA-4604-A33D-705A0DC849CA}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "EncryptionTests", "EncryptionTests\EncryptionTests.vbproj", "{AE29A20A-4203-4A0E-8C0D-069FA91A3E86}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Serialization", "Serialization\Serialization.vbproj", "{1C85D078-63FE-46B1-BB63-37F8D5C6AE62}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "CredentialManagement", "CredentialManagement\CredentialManagement.vbproj", "{5BEFA29C-08E6-4B97-9C0B-02E0F011A43B}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "CredentialManagementTests", "CredentialManagementTests\CredentialManagementTests.vbproj", "{77B85B94-ECFA-4CA4-972A-745A684B3E2A}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AWSHelpers", "AWSHelpers\AWSHelpers.vbproj", "{7842F851-AC6F-4D2F-B43B-E39078EA6602}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AWSHelpersTest", "AWSHelpersTest\AWSHelpersTest.vbproj", "{4958C3CE-82DF-4E68-9E3E-845300CFC940}"
+EndProject
+Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Encryption.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1AF5D50C-B1FA-4604-A33D-705A0DC849CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AF5D50C-B1FA-4604-A33D-705A0DC849CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AF5D50C-B1FA-4604-A33D-705A0DC849CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AF5D50C-B1FA-4604-A33D-705A0DC849CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE29A20A-4203-4A0E-8C0D-069FA91A3E86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE29A20A-4203-4A0E-8C0D-069FA91A3E86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE29A20A-4203-4A0E-8C0D-069FA91A3E86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE29A20A-4203-4A0E-8C0D-069FA91A3E86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C85D078-63FE-46B1-BB63-37F8D5C6AE62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C85D078-63FE-46B1-BB63-37F8D5C6AE62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C85D078-63FE-46B1-BB63-37F8D5C6AE62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C85D078-63FE-46B1-BB63-37F8D5C6AE62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BEFA29C-08E6-4B97-9C0B-02E0F011A43B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BEFA29C-08E6-4B97-9C0B-02E0F011A43B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BEFA29C-08E6-4B97-9C0B-02E0F011A43B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BEFA29C-08E6-4B97-9C0B-02E0F011A43B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77B85B94-ECFA-4CA4-972A-745A684B3E2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77B85B94-ECFA-4CA4-972A-745A684B3E2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77B85B94-ECFA-4CA4-972A-745A684B3E2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77B85B94-ECFA-4CA4-972A-745A684B3E2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7842F851-AC6F-4D2F-B43B-E39078EA6602}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7842F851-AC6F-4D2F-B43B-E39078EA6602}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7842F851-AC6F-4D2F-B43B-E39078EA6602}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7842F851-AC6F-4D2F-B43B-E39078EA6602}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4958C3CE-82DF-4E68-9E3E-845300CFC940}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4958C3CE-82DF-4E68-9E3E-845300CFC940}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4958C3CE-82DF-4E68-9E3E-845300CFC940}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4958C3CE-82DF-4E68-9E3E-845300CFC940}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

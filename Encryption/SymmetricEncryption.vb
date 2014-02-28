@@ -1,4 +1,21 @@
-﻿Public Class SymmetricEncryption
+﻿' Copyright (C) 2014 a.k.a. Chuck, Inc.
+'
+' Authored by Edwin Landy - edwin@akaChuck.com.
+'
+' This program is free software: you can redistribute it and/or modify
+' it under the terms of the GNU General Public License as published by
+' the Free Software Foundation, either version 3 of the License, or
+' (at your option) any later version.
+'
+' This program is distributed in the hope that it will be useful,
+' but WITHOUT ANY WARRANTY; without even the implied warranty of
+' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+' GNU General Public License for more details.
+'
+' You should have received a copy of the GNU General Public License
+' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Public Class SymmetricEncryption
     Public Shared Sub EncryptToStream(ByRef unencryptedStream As IO.Stream, ByRef outStream As IO.Stream, ByRef cred As SymmetricEncryptionCredential)
         Using encryptorStream As New SymmetricEncryptorStream(unencryptedStream, cred)
             encryptorStream.CopyTo(outStream)
@@ -59,21 +76,8 @@
     End Function
 
     Public Shared Function GetDecryptedBytes(ByRef envelope As SymmetricEncryptionEnvelope, ByRef passwordList As List(Of SymmetricEncryptionSecretKeyPassword)) As Byte()
-        Dim password As SymmetricEncryptionSecretKeyPassword = Nothing
 
-        For Each p As SymmetricEncryptionSecretKeyPassword In passwordList
-            If p.Id.Equals(envelope.KeyParameters.PasswordId) Then
-                password = p
-                Exit For
-            End If
-        Next
-
-        ' TODO: replace with custom exception
-        If password Is Nothing Then
-            Throw New ApplicationException("Password not found in password list.")
-        End If
-
-        Dim cred As New SymmetricEncryptionCredential(password, envelope.KeyParameters, envelope.IV)
+        Dim cred As New SymmetricEncryptionCredential(passwordList, envelope.KeyParameters, envelope.IV)
 
         Return GetDecryptedBytes(envelope.EncryptedData, cred)
     End Function
@@ -92,9 +96,12 @@
 End Class
 Public Class SymmetricEncryptorStream
     Inherits Security.Cryptography.CryptoStream
+    Private Property unencryptedStream As IO.Stream
 
     Public Sub New(ByRef unencryptedStream As IO.Stream, ByRef cred As SymmetricEncryptionCredential)
         MyBase.New(unencryptedStream, cred.GetEncryptor, Security.Cryptography.CryptoStreamMode.Read)
+        Me.unencryptedStream = unencryptedStream
+
     End Sub
 
     Public Sub Encrypt(ByRef outStream As IO.Stream, Optional ByVal bufferSize As Integer = 8192)
@@ -112,6 +119,7 @@ End Class
 
 Public Class SymmetricDecryptorStream
     Inherits Security.Cryptography.CryptoStream
+
     Public Sub New(ByRef encryptedStream As IO.Stream, ByRef cred As SymmetricEncryptionCredential)
         MyBase.New(encryptedStream, cred.GetDecryptor, Security.Cryptography.CryptoStreamMode.Read)
 
