@@ -18,36 +18,48 @@
 Imports System.Text
 Imports akaChuck
 Imports akaChuck.CredentialManagement
-
+Imports System.Configuration.ConfigurationManager
 <TestClass()>
 Public Class Test_FileSystemCredentialCache
-    Const CachePath As String = "C:\CredentialCacheTest"
+    Private CachePath As String = AppSettings("credentialFileCacheDirectory")
     <TestMethod()>
     Public Sub Test_FileSystemCredentialCache()
-
-
-        ' Create three different versions of the same credential
-        Dim cred1 As New UsernamePasswordCredential("Test", "TestPassword1", "TestCredential", 1)
-        Dim cred2 As New UsernamePasswordCredential("Test", "TestPassword2", "TestCredential", 2)
-        Dim cred3 As New UsernamePasswordCredential("Test", "TestPassword3", "TestCredential", 3)
-
-        ' Cache them to the file system
+        ' Create Cache.
         Dim cache As New FileSystemCredentialCache(Of UsernamePasswordCredential)(CachePath)
+        ' Create a credential.
+        Dim cred1 As New UsernamePasswordCredential("Test", "TestPassword1", "TestCredential", 1)
 
-        cache.CacheCredential(cred2)
+        '------------------------------
+        '- Test Read/Write ------------
+        '------------------------------
+        Dim wr As New CredentialCacheReadWriteTester(Of UsernamePasswordCredential)(cache, cred1)
+        wr.TestReadWrite()
+
+        '------------------------------
+        '- Test exceptions ------------
+        '------------------------------
+        Dim invalidCache As New FileSystemCredentialCache(Of UsernamePasswordCredential)(IO.Path.Combine(CachePath, "Invalid"))
+        Dim ex As New CredentialCacheExceptionTester(Of UsernamePasswordCredential)(cred1.Name, "InvalidName", 2, 453, cache, invalidCache)
+        ex.TestNotCachedException()
+
+        '-----------------------------------
+        '- Test deserialization ------------
+        '-----------------------------------
+        ' Cache cred1 to file system.
         cache.CacheCredential(cred1)
-        cache.CacheCredential(cred3)
 
-        ' ReadFromCache with only the 'name' parameter should return the last version.
-        Dim cred4 As UsernamePasswordCredential = cache.ReadFromCache("TestCredential").Credential
+        ' Read the credential from cache.
+        Dim cred2 As UsernamePasswordCredential = cache.ReadFromCache(cred1.Name, cred1.Version).Credential
 
-        Assert.AreEqual(cred3, cred4)
+        Assert.AreEqual(cred1.Name, cred2.Name)
+        Assert.AreEqual(cred1.Version, cred2.Version)
+        Assert.AreEqual(cred1.UserName, cred2.UserName)
+        Assert.AreEqual(cred1.Password, cred2.Password)
 
-
-
-
-
+        ' Cleanup.
+        cache.DeleteCachedCredentials()
 
     End Sub
+
 
 End Class

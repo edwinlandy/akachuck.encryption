@@ -66,7 +66,10 @@
     <Import Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AWSClientConfig.vb" />
+    <Compile Include="AWSTransaction.vb" />
     <Compile Include="IAM\IAMService.vb" />
+    <Compile Include="IAWSCredential.vb" />
     <Compile Include="IAM\TempoararyCredential.vb" />
     <Compile Include="EC2\InstanceProfileCredentialStore.vb" />
     <Compile Include="IAM\UserCredential.vb" />
@@ -85,8 +88,10 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="S3\BucketTransactions.vb" />
+    <Compile Include="S3\ObjectTransactions.vb" />
     <Compile Include="S3\S3CredentialStore.vb" />
-    <Compile Include="S3\S3Service.vb" />
+    <Compile Include="S3\S3Transaction.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

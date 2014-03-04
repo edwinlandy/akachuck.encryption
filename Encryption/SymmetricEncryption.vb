@@ -15,6 +15,45 @@
 ' You should have received a copy of the GNU General Public License
 ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+Public Class SymmetricEncryptorStream
+    Inherits Security.Cryptography.CryptoStream
+    Private Property unencryptedStream As IO.Stream
+
+    Public Sub New(ByRef unencryptedStream As IO.Stream, ByRef cred As SymmetricEncryptionCredential)
+        MyBase.New(unencryptedStream, cred.GetEncryptor, Security.Cryptography.CryptoStreamMode.Read)
+        Me.unencryptedStream = unencryptedStream
+    End Sub
+
+    Public Sub Encrypt(ByRef outStream As IO.Stream, Optional ByVal bufferSize As Integer = 8192)
+        Me.CopyTo(outStream, bufferSize)
+    End Sub
+    Public Function EncryptToBytes(Optional ByVal bufferSize As Integer = 8192) As Byte()
+        Dim returnValue() As Byte
+        Using stm As New IO.MemoryStream()
+            Me.CopyTo(stm, bufferSize)
+            returnValue = stm.ToArray()
+        End Using
+        Return returnValue
+    End Function
+End Class
+
+Public Class SymmetricDecryptorStream
+    Inherits Security.Cryptography.CryptoStream
+
+    Public Sub New(ByRef encryptedStream As IO.Stream, ByRef cred As SymmetricEncryptionCredential)
+        MyBase.New(encryptedStream, cred.GetDecryptor, Security.Cryptography.CryptoStreamMode.Read)
+    End Sub
+    Public Function DecryptToBytes() As Byte()
+        Dim returnValue() As Byte
+        Using stm As New IO.MemoryStream()
+            Me.CopyTo(stm)
+            returnValue = stm.ToArray()
+        End Using
+        Return returnValue
+    End Function
+
+End Class
+
 Public Class SymmetricEncryption
     Public Shared Sub EncryptToStream(ByRef unencryptedStream As IO.Stream, ByRef outStream As IO.Stream, ByRef cred As SymmetricEncryptionCredential)
         Using encryptorStream As New SymmetricEncryptorStream(unencryptedStream, cred)
@@ -51,7 +90,7 @@ Public Class SymmetricEncryption
             }
         Return returnValue
     End Function
-
+ 
     Public Shared Function GetDecryptedBytes(ByRef encryptedValue As Byte(), ByRef cred As SymmetricEncryptionCredential) As Byte()
         Dim outBytes() As Byte
         Using encryptedStream As New IO.MemoryStream(encryptedValue)
@@ -94,43 +133,5 @@ Public Class SymmetricEncryption
 
     End Function
 End Class
-Public Class SymmetricEncryptorStream
-    Inherits Security.Cryptography.CryptoStream
-    Private Property unencryptedStream As IO.Stream
 
-    Public Sub New(ByRef unencryptedStream As IO.Stream, ByRef cred As SymmetricEncryptionCredential)
-        MyBase.New(unencryptedStream, cred.GetEncryptor, Security.Cryptography.CryptoStreamMode.Read)
-        Me.unencryptedStream = unencryptedStream
 
-    End Sub
-
-    Public Sub Encrypt(ByRef outStream As IO.Stream, Optional ByVal bufferSize As Integer = 8192)
-        Me.CopyTo(outStream, bufferSize)
-    End Sub
-    Public Function EncryptToBytes(Optional ByVal bufferSize As Integer = 8192) As Byte()
-        Dim returnValue() As Byte
-        Using stm As New IO.MemoryStream()
-            Me.CopyTo(stm, bufferSize)
-            returnValue = stm.ToArray()
-        End Using
-        Return returnValue
-    End Function
-End Class
-
-Public Class SymmetricDecryptorStream
-    Inherits Security.Cryptography.CryptoStream
-
-    Public Sub New(ByRef encryptedStream As IO.Stream, ByRef cred As SymmetricEncryptionCredential)
-        MyBase.New(encryptedStream, cred.GetDecryptor, Security.Cryptography.CryptoStreamMode.Read)
-
-    End Sub
-    Public Function DecryptToBytes() As Byte()
-        Dim returnValue() As Byte
-        Using stm As New IO.MemoryStream()
-            Me.CopyTo(stm)
-            returnValue = stm.ToArray()
-        End Using
-        Return returnValue
-    End Function
-
-End Class

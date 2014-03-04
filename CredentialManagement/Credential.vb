@@ -22,25 +22,14 @@ Public MustInherit Class Credential
     Implements IComparable(Of Credential)
 
     <System.Runtime.Serialization.DataMember(Name:="Name")>
-    Protected _Name As String
-    ''' <summary>
-    ''' Unique name to be used by Credential Caching and Management
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property Name As String
-        Get
-            Return _Name
-        End Get
-    End Property
+    Public Property Name As String
     ''' <summary>
     ''' Credential version for purposes of credential rotation.
     ''' </summary>
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    <System.Runtime.Serialization.DataMember()>
+    <System.Runtime.Serialization.DataMember(Name:="Version")> _
     Public Property Version As Integer
 
     Protected Sub New(ByRef name As String, Optional ByVal version As Integer = 1)

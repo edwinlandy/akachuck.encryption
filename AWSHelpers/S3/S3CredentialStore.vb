@@ -37,37 +37,31 @@ Namespace S3
                 Return _BucketExists
             End Get
         End Property
-        Private ReadOnly Property S3Client As AmazonS3Client
-            Get
-                Return New AmazonS3Client(Amazon.RegionEndpoint.USEast1)
-            End Get
-        End Property
+        Private Property ClientConfig As AWS.AWSClientConfig
+
         ' The latest encryption credential with which to encrypt new credentials
-        Private Property Cred As SymmetricEncryptionCredential
+        Private Property EncryptionCred As SymmetricEncryptionCredential
         ' The list of secret passwords that may be encountered when encrypting from store.
         Private Property PasswordList As List(Of SymmetricEncryptionSecretKeyPassword)
         ''' <summary>
         ''' 
         ''' </summary>
-        ''' <param name="bucket">Bucket where credentials are stored.</param>
+        ''' <param name="bucketName">Bucket where credentials are stored.</param>
         ''' <param name="passwordList">A list of passwords that may have been used to encrypted previously stored credentials.</param>
         ''' <param name="latestCred">The symmetric encryption credential with which new credentials are to be encrypted before stored.</param>
         ''' <remarks></remarks>
-        Public Sub New(ByRef bucket As String, passwordList As List(Of SymmetricEncryptionSecretKeyPassword), latestCred As SymmetricEncryptionCredential)
-
-            Me._BucketName = bucket
+        Public Sub New(ByRef bucketName As String, passwordList As List(Of SymmetricEncryptionSecretKeyPassword), latestCred As SymmetricEncryptionCredential, ByRef clientConfig As AWSClientConfig)
+            Me.ClientConfig = clientConfig
+            Me._BucketName = bucketName
 
             ' Bucket must have versioning is enabled.
-            Dim bucketVerReq As New Model.GetBucketVersioningRequest With
-                       {
-                           .BucketName = BucketName
-                       }
+            Dim bucketVerTrans As New GetBucketVersioningTransaction(bucketName, clientConfig)
             Try
-                Dim bucketVerRes As Model.GetBucketVersioningResponse = S3Client.GetBucketVersioning(bucketVerReq)
+                bucketVerTrans.ExecuteRequest()
                 ' Exception would be thrown if bucket does not exist
                 Me._BucketExists = True
 
-                If Not bucketVerRes.VersioningConfig.Status = VersionStatus.Enabled Then
+                If Not bucketVerTrans.Response.VersioningConfig.Status = Amazon.S3.VersionStatus.Enabled Then
                     Throw New S3CredentialStoreException("S3CredentialStore requires S3Bucket to have versioning enabled.", _
                                                          S3CredentialStoreException.S3CredentialStoreExceptionReason.S3BucketVersioningNotEnabled, _
                                                          Nothing)
@@ -81,8 +75,6 @@ Namespace S3
                     Throw New S3CredentialStoreException("We do not have possession of bucket.", S3CredentialStoreException.S3CredentialStoreExceptionReason.S3BucketAccessDenied, s3Ex)
                 Else
                     Throw s3Ex
-
-
                 End If
             End Try
 
@@ -96,24 +88,14 @@ Namespace S3
                 Throw New S3CredentialStoreException("Bucket already exists.", S3CredentialStoreException.S3CredentialStoreExceptionReason.S3BucketAlreadyExists, Nothing)
             End If
 
-            Dim createBucketReq As New Model.PutBucketRequest With
-            {
-                .BucketName = BucketName
-            }
-
-            Dim createVersioningReq As New Model.PutBucketVersioningRequest With
-                {
-                    .BucketName = BucketName,
-                    .VersioningConfig = New Model.S3BucketVersioningConfig With
-                    {
-                        .Status = VersionStatus.Enabled
-                    }
-                }
+            Dim putBucketTrans As New PutBucketTransaction(BucketName, ClientConfig)
+            Dim putVersioningTrans As New PutBucketVersioningTransaction(BucketName, Amazon.S3.VersionStatus.Enabled, ClientConfig)
 
             Try
-                Dim createBucketRes As Model.PutBucketResponse = S3Client.PutBucket(createBucketReq)
+                putBucketTrans.ExecuteRequest()
                 Me._BucketExists = True
-                Dim versioningRes As Model.PutBucketVersioningResponse = S3Client.PutBucketVersioning(createVersioningReq)
+                putVersioningTrans.ExecuteRequest()
+
             Catch s3Ex As AmazonS3Exception
                 If s3Ex.ErrorCode = "BucketAlreadyExists" Then
                     Throw New S3CredentialStoreException("Cannot create bucket. It already exists.", S3CredentialStoreException.S3CredentialStoreExceptionReason.S3BucketAlreadyExists, s3Ex)
@@ -126,7 +108,7 @@ Namespace S3
         End Function
 
         Public Function ReadLatestFromStore(ByRef name As String) As StoredCredential(Of T) Implements CredentialStore(Of T).ReadLatestFromStore
-            Dim service As New GetObjectTransaction(Me.BucketName, GetType(T).Name & "/" & name, passwordList)
+            Dim service As New GetObjectTransaction(Me.BucketName, GetObjectKey(name), PasswordList, ClientConfig)
 
             Try
                 service.ExecuteRequest()
@@ -164,21 +146,17 @@ Namespace S3
 
             Return returnValue
 
-
         End Function
 
         Public Function ReadVersionsFromStore(ByRef name As String) As System.Collections.Generic.List(Of StoredCredential(Of T)) Implements CredentialStore(Of T).ReadVersionsFromStore
             Dim returnValue As New List(Of StoredCredential(Of T))
             Dim versionList As New List(Of Model.S3ObjectVersion)
-            Dim versionReq As New Model.ListVersionsRequest With
-                {
-                    .BucketName = Me.BucketName,
-                    .Prefix = GetType(T).Name & "/" & name
-                }
 
-            Dim versionRes As Model.ListVersionsResponse
+            Dim versionTrans As New ListVersionsTransaction(BucketName, GetObjectKey(name), ClientConfig)
+
             Try
-                versionRes = S3Client.ListVersions(versionReq)
+                versionTrans.ExecuteRequest()
+
             Catch amazonEx As AmazonS3Exception
                 If amazonEx.ErrorCode = "NoSuchKey" Then
                     Throw New CredentialNotStoredException(name, GetType(T))
@@ -188,16 +166,16 @@ Namespace S3
 
             End Try
 
-            versionList.AddRange(versionRes.Versions)
+            versionList.AddRange(versionTrans.Response.Versions)
 
-            While Not versionRes.IsTruncated
-                versionReq.KeyMarker = versionRes.NextKeyMarker
-                versionRes = S3Client.ListVersions(versionReq)
-                versionList.AddRange(versionRes.Versions)
+            While versionTrans.Response.IsTruncated
+                versionTrans.Request.KeyMarker = versionTrans.Response.NextKeyMarker
+                versionTrans.ExecuteRequest()
+                versionList.AddRange(versionTrans.Response.Versions)
             End While
 
             For Each v As Model.S3ObjectVersion In versionList
-                Using getObjectTrans As New S3.GetObjectTransaction(Me.BucketName, v.Key, v.VersionId, PasswordList)
+                Using getObjectTrans As New S3.GetObjectTransaction(Me.BucketName, v.Key, v.VersionId, PasswordList, ClientConfig)
                     getObjectTrans.ExecuteRequest()
 
                     Dim storedCred As New StoredCredential(Of T) With
@@ -205,30 +183,44 @@ Namespace S3
                             .Credential = Json(Of T).FromStream(getObjectTrans.ResponseStream),
                             .LastStored = getObjectTrans.Response.LastModified
                         }
-                    returnValue.Add(storedCred)
+
+                    ' Check to make sure name is what we're looking for, and not just a prefix.
+                    If storedCred.Credential.Name = name Then
+                        returnValue.Add(storedCred)
+                    End If
+
                 End Using
 
-            Next
-
-            ' Check to make sure name is what we're looking for, and not just a prefix.
-            Dim itemsToRemove As New List(Of StoredCredential(Of T))
-
-            For Each s As StoredCredential(Of T) In returnValue
-                If Not s.Credential.Name = name Then
-                    itemsToRemove.Add(s)
-                End If
-            Next
-
-            For Each r As StoredCredential(Of T) In itemsToRemove
-                returnValue.Remove(r)
             Next
 
             Return returnValue
 
         End Function
 
-        Public Sub RemoveCredential(credential As T) Implements CredentialStore(Of T).RemoveCredential
-            Throw New NotImplementedException
+        Public Sub RemoveCredential(ByRef name As String) Implements CredentialStore(Of T).RemoveCredential
+            Dim versionList As New List(Of Model.S3ObjectVersion)
+            ' GetVersions
+            Dim listVerTrans As New ListVersionsTransaction(Me.BucketName, GetObjectKey(name), Me.ClientConfig)
+            listVerTrans.ExecuteRequest()
+
+            versionList.AddRange(listVerTrans.Response.Versions)
+
+            While listVerTrans.Response.IsTruncated
+                listVerTrans.Request.KeyMarker = listVerTrans.Response.NextKeyMarker
+                listVerTrans.ExecuteRequest()
+                versionList.AddRange(listVerTrans.Response.Versions)
+            End While
+
+            ' Delete Version, if exists
+            For Each v As Model.S3ObjectVersion In versionList
+                ' Have to test objectKey, because S3 only allows to supply key prefix to the request.
+                ' other names that start with the name we are deleting are included in the request.
+                If v.Key = GetObjectKey(name) Then
+                    Dim delTrans As New DeleteObjectTransaction(BucketName, GetObjectKey(name), ClientConfig, v.VersionId)
+                    delTrans.ExecuteRequest()
+                End If
+            Next
+
         End Sub
 
         Public Sub StoreCredential(credential As T) Implements CredentialStore(Of T).StoreCredential
@@ -236,16 +228,16 @@ Namespace S3
             ' Fill the stream with the serialized credential
             Json(Of T).ToStream(credential, unencryptedStrm)
 
-            Dim putObjectTrans As New PutObjectTransaction(Me.BucketName, GetType(T).Name & "/" & credential.Name, unencryptedStrm, Me.Cred, Nothing)
+            Dim putObjectTrans As New PutObjectTransaction(Me.BucketName, GetObjectKey(credential.Name), unencryptedStrm, ClientConfig)
 
             putObjectTrans.Request.Metadata.Add("version", credential.Version.ToString)
 
             putObjectTrans.ExecuteRequest()
-
-
         End Sub
 
-
+        Private Function GetObjectKey(ByRef credentialName As String) As String
+            Return GetType(T).Name & "/" & credentialName
+        End Function
     End Class
 
     Public Class S3CredentialStoreException

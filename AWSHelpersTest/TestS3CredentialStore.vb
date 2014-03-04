@@ -20,19 +20,19 @@ Imports Amazon
 Imports Amazon.S3
 Imports akaChuck.AWS.S3
 Imports akaChuck.AWS.IAM
-
 Imports akaChuck.CredentialManagement
-
+Imports System.Configuration.ConfigurationManager
 <TestClass()>
 Public Class TestS3CredentialStore
 
-
-    Private S3Client As New Amazon.S3.AmazonS3Client(Amazon.RegionEndpoint.USEast1)
-
-
     <TestMethod()>
     Public Sub Test_S3CredentialStore_BucketCreation()
-       
+        ' Setup access to S3
+        Dim credCache As New FileSystemCredentialCache(Of UserCredential)(AppSettings("credentialFileCacheDirectory"))
+        Dim awsCred As UserCredential = credCache.ReadFromCache(AppSettings("testAWSCredentialName"), CInt(AppSettings("testAwsCredentialVersion"))).Credential
+        Dim s3config As New akaChuck.AWS.AWSClientConfig(awsCred, Amazon.RegionEndpoint.USEast1)
+
+        ' Setup credential to store
         Dim password As New akaChuck.Encryption.SymmetricEncryptionSecretKeyPassword("TestPassword", 1, akaChuck.Encryption.PRNG.GetRandomBytes)
         Dim passwordList As New List(Of akaChuck.Encryption.SymmetricEncryptionSecretKeyPassword)
         passwordList.Add(password)
@@ -43,7 +43,7 @@ Public Class TestS3CredentialStore
         '----- 1. BucketExists Property works.-----
         '------------------------------------------
         ' Bucket does not already exist.
-        Dim store1 As New S3CredentialStore(Of UsernamePasswordCredential)("HelgaDogSoloTest-S3CredentialStore-BucketCreation-1", passwordList, cred)
+        Dim store1 As New S3CredentialStore(Of UsernamePasswordCredential)("HelgaDogSoloTest-S3CredentialStore-BucketCreation-1", passwordList, cred, s3config)
         Assert.IsFalse(store1.BucketExists)
 
         ' Create proper Bucket.
@@ -54,16 +54,12 @@ Public Class TestS3CredentialStore
         '----- 2. Constructor throws expected exception when bucket is improper.-----
         '----------------------------------------------------------------------------
         ' Create improper Bucket with no versioning
-        Dim req2 As New Amazon.S3.Model.PutBucketRequest With
-            {
-                .BucketName = "HelgaDogSoloTest-S3CredentialStore-BucketCreation-2"
-            }
-        Dim res2 As Amazon.S3.Model.PutBucketResponse = Me.S3Client.PutBucket(req2)
-
+        Dim putBucketTrans As New PutBucketTransaction("HelgaDogSoloTest-S3CredentialStore-BucketCreation-2", s3config)
+        putBucketTrans.ExecuteRequest()
 
         Try
             ' Should throw exception when bucket that exists is not proper.
-            Dim store2 As New S3CredentialStore(Of UsernamePasswordCredential)(req2.BucketName, passwordList, cred)
+            Dim store2 As New S3CredentialStore(Of UsernamePasswordCredential)(putBucketTrans.Request.BucketName, passwordList, cred, s3config)
             ' Execution should not make it here.
             Assert.Fail()
 
@@ -80,7 +76,7 @@ Public Class TestS3CredentialStore
 
         Try
             ' Should throw exception - This test depends on the existance of the bucket on another account
-            Dim store3 As New S3CredentialStore(Of UsernamePasswordCredential)("HelgaDogSoloTest-S3CredentialStore-BucketCreation-3", passwordList, cred)
+            Dim store3 As New S3CredentialStore(Of UsernamePasswordCredential)("HelgaDogSoloTest-S3CredentialStore-BucketCreation-3", passwordList, cred, s3config)
 
             ' Code execution should not make it here
             Assert.Fail()
@@ -109,13 +105,10 @@ Public Class TestS3CredentialStore
 
         ' Clean Up
         ' Delete buckets
-        Dim delreq As New Model.DeleteBucketRequest With
-            {
-                .BucketName = store1.BucketName
-                }
-        S3Client.DeleteBucket(delreq)
-        delreq.BucketName = req2.BucketName
-        S3Client.DeleteBucket(delreq)
+        Dim delTrans As New DeleteBucketTransaction(store1.BucketName, s3config)
+        delTrans.ExecuteRequest()
+        delTrans.Request.BucketName = putBucketTrans.Request.BucketName
+        delTrans.ExecuteRequest()
 
     End Sub
 

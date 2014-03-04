@@ -21,6 +21,8 @@ Namespace IAM
     <DataContract()>
     Public Class UserCredential
         Inherits CredentialManagement.Credential
+        Implements IAWSCredential
+
         <DataMember()> _
         Public Property Key As String
         <DataMember()> _
@@ -58,10 +60,14 @@ Namespace IAM
         End Function
         Public Shared Function CurrentnessChecker(ByRef cred As UserCredential) As CredentialManagement.CredentialCheckerResult
 
-            Dim ks As New Amazon.IdentityManagement.AmazonIdentityManagementServiceClient()
+            Throw New NotImplementedException
 
 
 
+        End Function
+
+        Public Function GetAWSCredentials() As Amazon.Runtime.AWSCredentials Implements IAWSCredential.GetAWSCredentials
+            Return New Amazon.Runtime.BasicAWSCredentials(Me.Key, Me.Secret)
         End Function
     End Class
 End Namespace

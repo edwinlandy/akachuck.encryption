@@ -35,6 +35,7 @@ Public Interface CredentialCache(Of T As Credential)
     ''' <param name="Name"></param>
     ''' <param name="version"></param>
     ''' <returns></returns>
+    ''' <exception cref="CredentialNotCachedException">Thrown if credential is not cached at specified location.</exception>
     ''' <remarks>Gets credential with name and version specified for credential type.-</remarks>
     Function ReadFromCache(ByRef name As String, ByVal version As Integer) As CachedCredential(Of T)
 
@@ -54,5 +55,20 @@ Public Class CachedCredential(Of T As Credential)
         ' Sort Items by the version of the credential.
         Return Me.Credential.Version - other.Credential.Version
     End Function
+End Class
+Public Class CredentialNotCachedException
+    Inherits ApplicationException
+
+    Public Property CredentialName As String
+    Public Property CredentialType As System.Type
+
+    Public Sub New(credentialName As String, credentialType As System.Type)
+        MyBase.New("Credential " & credentialName & " of type " & credentialType.Name & " is not cached.")
+
+        Me.CredentialName = credentialName
+        Me.CredentialType = credentialType
+
+
+    End Sub
 End Class
 

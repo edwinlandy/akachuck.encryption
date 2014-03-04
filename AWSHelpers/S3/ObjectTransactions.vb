@@ -13,24 +13,13 @@
 ' GNU General Public License for more details.
 '
 ' You should have received a copy of the GNU General Public License
-' along with this program.  If not, see <http://www.gnu.org/licenses/>.)
+' along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Imports Amazon.S3.Model
-Imports akaChuck.Serialization
 Imports akaChuck.Encryption
+Imports akaChuck.Serialization
 
 Namespace S3
-    Public MustInherit Class S3Transaction(Of Req As {Amazon.Runtime.AmazonWebServiceRequest}, Res As {Amazon.Runtime.AmazonWebServiceResponse})
-
-        Public Property Client As Amazon.S3.AmazonS3Client
-        Public Property Request As Req
-        Public Property Response As Res
-        Protected Sub New()
-
-            Me.Client = New Amazon.S3.AmazonS3Client(Amazon.RegionEndpoint.USEast1)
-        End Sub
-        Public MustOverride Sub ExecuteRequest()
-    End Class
 
     Public Class PutObjectTransaction
         Inherits S3Transaction(Of PutObjectRequest, PutObjectResponse)
@@ -47,8 +36,8 @@ Namespace S3
         End Property
         Public Property RequestStream As IO.Stream
 
-        Public Sub New(ByRef bucketName As String, ByRef objectKey As String, ByRef inputStream As IO.Stream)
-            MyBase.New()
+        Public Sub New(ByRef bucketName As String, ByRef objectKey As String, ByRef inputStream As IO.Stream, ByVal config As AWSClientConfig)
+            MyBase.New(config)
             Me._EncryptedTransaction = False
 
             Me.Request = New PutObjectRequest With
@@ -65,26 +54,25 @@ Namespace S3
         ''' <param name="bucketName">The bucket to store to object in.</param>
         ''' <param name="objectKey">The object's key.</param>
         ''' <param name="unencryptedStream">The unencrypted stream to encrypt and store in S3.</param>
-        ''' <param name="cred">The symmetric encryption credential to use.</param>
+        ''' <param name="encryptionCred">The symmetric encryption credential to use.</param>
         ''' <param name="cachingDirectory">Streams too big to fit in memory must be cached to file.  The file system directory to cache the encrypted data in. 
         ''' Pass Null value to use system memory instead.</param>
         ''' <remarks></remarks>
-        Public Sub New(ByRef bucketName As String, ByRef objectKey As String, ByRef unencryptedStream As IO.Stream, cred As Encryption.SymmetricEncryptionCredential, ByRef cachingDirectory As String)
-            Me.New(bucketName, objectKey, unencryptedStream)
+        Public Sub New(ByRef bucketName As String, ByRef objectKey As String, ByRef unencryptedStream As IO.Stream, _
+                       ByRef encryptionCred As Encryption.SymmetricEncryptionCredential, ByRef config As AWSClientConfig, ByRef cachingDirectory As String)
+            Me.New(bucketName, objectKey, unencryptedStream, config)
             Me._EncryptedTransaction = True
 
             ' AWS S3 will be receiving an encrypted file.
             Me.Request.ContentType = "application/octet-stream"
-            Me.Request.Metadata.Add("overtkeyparameters", Json(Of SymmetricEncryptionOvertKeyParameters).GetBase64String(cred.OvertParameters))
-            Me.Request.Metadata.Add("iv", Convert.ToBase64String(cred.IV))
+            Me.Request.Metadata.Add("overtkeyparameters", Json(Of SymmetricEncryptionOvertKeyParameters).GetBase64String(encryptionCred.OvertParameters))
+            Me.Request.Metadata.Add("iv", Convert.ToBase64String(encryptionCred.IV))
             Me.CachingDirectory = cachingDirectory
-            Me.Cred = cred
+            Me.Cred = encryptionCred
         End Sub
 
         Public Overrides Sub ExecuteRequest()
             If Me.EncryptedTransaction Then
-
-
                 If Me.CachingDirectory Is Nothing Then
                     ' Encrypt stream to memory stream.  AWS SDK needs a seekable stream.
                     Using ms As New IO.MemoryStream
@@ -134,7 +122,8 @@ Namespace S3
         Public Property ResponseStream As IO.Stream
 
         ' Standard Request
-        Public Sub New(ByRef bucketName As String, ByRef objectKey As String)
+        Public Sub New(ByRef bucketName As String, ByRef objectKey As String, ByRef config As AWSClientConfig)
+            MyBase.New(config)
             _EncryptedTransaction = False
 
 
@@ -146,7 +135,8 @@ Namespace S3
 
         End Sub
         ' Standard Request with version
-        Public Sub New(ByRef bucketName As String, ByRef objectKey As String, ByRef versionId As String)
+        Public Sub New(ByRef bucketName As String, ByRef objectKey As String, ByRef versionId As String, ByRef config As AWSClientConfig)
+            MyBase.New(config)
             _EncryptedTransaction = False
 
             Request = New GetObjectRequest With
@@ -158,7 +148,8 @@ Namespace S3
 
         End Sub
         ' Encrypted request
-        Public Sub New(ByRef bucketName As String, ByRef objectkey As String, ByRef passwordList As List(Of Encryption.SymmetricEncryptionSecretKeyPassword))
+        Public Sub New(ByRef bucketName As String, ByRef objectkey As String, ByRef passwordList As List(Of Encryption.SymmetricEncryptionSecretKeyPassword), ByRef config As AWSClientConfig)
+            MyBase.New(config)
             _EncryptedTransaction = True
             Request = New GetObjectRequest With
                 {
@@ -168,7 +159,8 @@ Namespace S3
             Me.PasswordList = passwordList
         End Sub
         ' Encrypted request with version
-        Public Sub New(ByRef bucketName As String, ByRef objectkey As String, ByRef versionId As String, ByRef passwordList As List(Of Encryption.SymmetricEncryptionSecretKeyPassword))
+        Public Sub New(ByRef bucketName As String, ByRef objectkey As String, ByRef versionId As String, ByRef passwordList As List(Of Encryption.SymmetricEncryptionSecretKeyPassword), ByRef config As AWSClientConfig)
+            MyBase.New(config)
             _EncryptedTransaction = True
             Request = New GetObjectRequest With
                 {
@@ -216,6 +208,38 @@ Namespace S3
         End Sub
 #End Region
 
+    End Class
+
+    Public Class DeleteObjectTransaction
+        Inherits S3Transaction(Of DeleteObjectRequest, DeleteObjectResponse)
+        Public Sub New(ByRef bucketName As String, ByRef objectKey As String, ByRef config As AWSClientConfig, Optional ByRef versionId As String = Nothing)
+            MyBase.New(config)
+            Me.Request = New DeleteObjectRequest With
+                         {
+                             .BucketName = bucketName,
+                             .Key = objectKey,
+                             .VersionId = versionId
+                         }
+        End Sub
+
+        Public Overrides Sub ExecuteRequest()
+            Me.Response = Client.DeleteObject(Me.Request)
+        End Sub
+    End Class
+
+    Public Class ListVersionsTransaction
+        Inherits S3Transaction(Of ListVersionsRequest, ListVersionsResponse)
+        Public Sub New(ByRef bucketName As String, ByRef objectKeyPrefix As String, ByRef config As AWSClientConfig)
+            MyBase.New(config)
+            Me.Request = New ListVersionsRequest With
+                         {
+                             .BucketName = bucketName,
+                             .Prefix = objectKeyPrefix
+                         }
+        End Sub
+        Public Overrides Sub ExecuteRequest()
+            Me.Response = Me.Client.ListVersions(Me.Request)
+        End Sub
     End Class
 
 End Namespace

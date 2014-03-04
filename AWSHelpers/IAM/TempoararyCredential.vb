@@ -21,6 +21,7 @@ Namespace IAM
     <DataContract()> _
     Public Class TemporaryCredential
         Inherits CredentialManagement.Credential
+        Implements IAWSCredential
 
         <DataMember()> _
         Public Property Key As String
@@ -58,7 +59,9 @@ Namespace IAM
             Return returnValue
         End Function
 
-
+        Public Function GetAWSCredentials() As Amazon.Runtime.AWSCredentials Implements IAWSCredential.GetAWSCredentials
+            Return New Amazon.Runtime.SessionAWSCredentials(Me.Key, Me.Secret, Me.Token)
+        End Function
     End Class
 End Namespace
 

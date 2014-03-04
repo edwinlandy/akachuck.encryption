@@ -20,30 +20,19 @@ Imports akaChuck.AWS.IAM
 Imports Amazon.IdentityManagement
 Namespace IAM
     Public MustInherit Class IAMTransaction(Of Req As {Amazon.Runtime.AmazonWebServiceRequest}, Res As {Amazon.Runtime.AmazonWebServiceResponse})
+        Inherits AWSTransaction(Of Req, Res, Amazon.IdentityManagement.AmazonIdentityManagementServiceClient)
 
-        Public Property Client As Amazon.IdentityManagement.AmazonIdentityManagementServiceClient
-        Public Property Request As Req
-        Public Property Response As Res
-
-        Protected Sub New(ByRef awsCredential As Amazon.Runtime.AWSCredentials)
-            Me.Client = New Amazon.IdentityManagement.AmazonIdentityManagementServiceClient(awsCredential)
+        Protected Sub New(ByRef cred As IAWSCredential)
+            MyBase.New(New AmazonIdentityManagementServiceClient(cred.GetAWSCredentials))
         End Sub
-        Public MustOverride Sub ExecuteRequest()
+    
     End Class
 
     Public Class ListAccessKeyTransaction
         Inherits IAMTransaction(Of Model.ListAccessKeysRequest, Model.ListAccessKeysResponse)
 
-        Public Sub New(ByRef awsCred As UserCredential, Optional ByVal username As String = Nothing)
-            MyBase.New(New Amazon.Runtime.BasicAWSCredentials(awsCred.Key, awsCred.Secret))
-            Me.Request = New Model.ListAccessKeysRequest With
-                         {
-                             .UserName = username
-                         }
-        End Sub
-
-        Public Sub New(ByRef awsCred As TemporaryCredential, Optional ByVal username As String = Nothing)
-            MyBase.New(New Amazon.Runtime.SessionAWSCredentials(awsCred.Key, awsCred.Secret, awsCred.Token))
+        Public Sub New(ByRef cred As IAWSCredential, Optional ByVal username As String = Nothing)
+            MyBase.New(cred)
             Me.Request = New Model.ListAccessKeysRequest With
                          {
                              .UserName = username

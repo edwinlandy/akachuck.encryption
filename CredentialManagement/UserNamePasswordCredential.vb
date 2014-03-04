@@ -15,13 +15,13 @@
 ' You should have received a copy of the GNU General Public License
 ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-<System.Runtime.Serialization.DataContractAttribute()>
+<System.Runtime.Serialization.DataContractAttribute()> _
 Public Class UsernamePasswordCredential
     Inherits akaChuck.CredentialManagement.Credential
     Delegate Function CredentialChecker(ByRef credential As UsernamePasswordCredential) As CredentialCheckerResult
-
-    Private _credentialName As String
+    <Runtime.Serialization.DataMember(Name:="UserName")> _
     Private _UserName As String
+    <Runtime.Serialization.DataMember(Name:="Password")> _
     Private _Password As String
 
     Public ReadOnly Property UserName As String
@@ -49,7 +49,7 @@ Public Class UsernamePasswordCredential
         Return PropernessChecker(Me).Result
 
     End Function
-  
+
     Public Shared Function PropernessChecker(ByRef credential As UsernamePasswordCredential) As CredentialCheckerResult
         Dim returnValue As New CredentialCheckerResult
         Dim result As Boolean = True

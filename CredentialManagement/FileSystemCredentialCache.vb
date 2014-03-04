@@ -42,6 +42,7 @@ Public Class FileSystemCredentialCache(Of T As Credential)
 
     End Sub
 
+    
     Public Sub CacheCredential(ByRef credential As T) Implements CredentialCache(Of T).CacheCredential
 
         Dim fileName As String = credential.Name & "-" & credential.Version.ToString
@@ -50,9 +51,19 @@ Public Class FileSystemCredentialCache(Of T As Credential)
         Json(Of T).ToFile(credential, filePath)
 
     End Sub
+  
     Public Sub DeleteCachedCredentials() Implements CredentialCache(Of T).DeleteCachedCredentials
-        Throw New NotImplementedException
+        Dim files As IO.FileInfo() = Me.CacheTypeDirectory.GetFiles()
+        For Each f As IO.FileInfo In files
+            f.Delete()
+        Next
     End Sub
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <exception cref="CredentialNotCachedException">Thrown if credential is not cached at specified location.</exception>
+    ''' <remarks></remarks>
     Function ReadAllFromCache() As List(Of CachedCredential(Of T)) Implements CredentialCache(Of T).ReadAllFromCache
         Dim credList As New List(Of CachedCredential(Of T))
         Dim files As IO.FileInfo() = Me.CacheTypeDirectory.GetFiles()
@@ -75,6 +86,13 @@ Public Class FileSystemCredentialCache(Of T As Credential)
         Return credList
 
     End Function
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="name"></param>
+    ''' <returns></returns>
+    ''' <exception cref="CredentialNotCachedException">Thrown if credential is not cached at specified location.</exception>
+    ''' <remarks></remarks>
     Function ReadAllFromCache(ByRef name As String) As List(Of CachedCredential(Of T)) Implements CredentialCache(Of T).ReadAllFromCache
         Dim credList As New List(Of CachedCredential(Of T))
         Dim files As IO.FileInfo() = Me.CacheTypeDirectory.GetFiles(name & "-*")
@@ -99,6 +117,7 @@ Public Class FileSystemCredentialCache(Of T As Credential)
     ''' </summary>
     ''' <param name="name"></param>
     ''' <returns></returns>
+    ''' <exception cref="CredentialNotCachedException">Thrown if credential is not cached at specified location.</exception>
     ''' <remarks></remarks>
     Public Function ReadFromCache(ByRef name As String) As CachedCredential(Of T) Implements CredentialCache(Of T).ReadFromCache
         Dim credList As New List(Of CachedCredential(Of T))
@@ -122,10 +141,19 @@ Public Class FileSystemCredentialCache(Of T As Credential)
         If credList.Count > 0 Then
             Return credList(credList.Count - 1)
         Else
-            Return Nothing
+            '!!! Throw exception
+            Throw New CredentialNotCachedException(name, GetType(T))
         End If
 
     End Function
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="name"></param>
+    ''' <param name="version"></param>
+    ''' <returns></returns>
+    ''' <exception cref="CredentialNotCachedException">Thrown if credential is not cached at specified location.</exception>
+    ''' <remarks></remarks>
     Public Function ReadFromCache(ByRef name As String, version As Integer) As CachedCredential(Of T) Implements CredentialCache(Of T).ReadFromCache
 
         Dim fileName As String = name & "-" & version
@@ -154,19 +182,4 @@ Public Class FileSystemCredentialCache(Of T As Credential)
     End Function
 
 
-End Class
-Public Class CredentialNotCachedException
-    Inherits ApplicationException
-
-    Public Property CredentialName As String
-    Public Property CredentialType As System.Type
-
-    Public Sub New(credentialName As String, credentialType As System.Type)
-        MyBase.New("Credential " & credentialName & " of type " & credentialType.Name & " is not cached.")
-
-        Me.CredentialName = credentialName
-        Me.CredentialType = credentialType
-
-
-    End Sub
 End Class

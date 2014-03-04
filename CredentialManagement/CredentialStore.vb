@@ -21,7 +21,7 @@ Public Interface CredentialStore(Of T As akaChuck.CredentialManagement.Credentia
     Function ReadVersionsFromStore(ByRef name As String) As List(Of StoredCredential(Of T))
     Function ReadLatestFromStore(ByRef name As String) As StoredCredential(Of T)
     Sub StoreCredential(ByVal credential As T)
-    Sub RemoveCredential(ByVal credential As T)
+    Sub RemoveCredential(ByRef name As String)
     Function ListCredentialNames() As List(Of String)
 
 End Interface

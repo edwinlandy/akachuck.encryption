@@ -77,7 +77,6 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommonS3Tasks.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="TestS3CredentialStore.vb" />
     <Compile Include="TestS3ObjectSymmetricEncryption.vb" />
